@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - Karpagam Institute of Technology</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="student_styles.css">
+    <link rel="stylesheet" href="communication.css">
+    <!-- PeerJS library for WebRTC connections -->
+    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+    <!-- Socket.IO for real-time signaling -->
+    <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="student-profile">
+                <div class="profile-img">A</div>
+                <h2>Afshana R</h2>
+                <p>721223243001</p>
+                <p>Artificial Intelligence and Data Science</p>
+                <div class="student-status online">
+                    <span class="status-indicator"></span>
+                    <span class="status-text">Online</span>
+                </div>
+            </div>
+            <nav>
+                <ul>
+                    <li class="active"><a href="#mentor-section"><i class="fas fa-user-tie"></i> My Mentor</a></li>
+                    <li><a href="#schedule-section"><i class="fas fa-calendar"></i> Schedule</a></li>
+                    <li><a href="#video-section"><i class="fas fa-video"></i> Video Calls</a></li>
+                    <li><a href="#messages-section"><i class="fas fa-comments"></i> Messages</a></li>
+                    <li><a href="#resources-section"><i class="fas fa-book"></i> Resources</a></li>
+                    <li><a href="#profile-section"><i class="fas fa-user-cog"></i> Profile</a></li>
+                    <li><a href="mentor.html"><i class="fas fa-arrow-left"></i> Back to Mentor View</a></li>
+                </ul>
+            </nav>
+            <div class="quick-actions">
+                <h3>Quick Actions</h3>
+                <button class="quick-action-btn" id="btnQuickMessage">
+                    <i class="fas fa-comment-alt"></i> Quick Message
+                </button>
+                <button class="quick-action-btn" id="btnInstantMeeting">
+                    <i class="fas fa-video"></i> Instant Meeting
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Mobile Sidebar Toggle -->
+            <button class="sidebar-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <header>
+                <div class="header-title">
+                    <h1>Mentor Connect</h1>
+                    <p>Karpagam Institute of Technology</p>
+                </div>
+                <div class="header-logo">
+                    <img src="KIT LOGO.png" alt="Karpagam Institute of Technology Logo" class="kit-logo">
+                </div>
+                <div class="search-bar">
+                    <input type="text" placeholder="Search resources...">
+                    <i class="fas fa-search"></i>
+                </div>
+                <div class="header-actions">
+                    <div class="notifications">
+                        <button class="notification-btn">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge">3</span>
+                        </button>
+                        <div class="notification-dropdown">
+                            <h3>Notifications</h3>
+                            <div class="notification-item unread">
+                                <div class="notification-icon"><i class="fas fa-comment"></i></div>
+                                <div class="notification-content">
+                                    <p>New message from Dr. Jebakumar</p>
+                                    <span class="notification-time">Just now</span>
+                                </div>
+                            </div>
+                            <div class="notification-item unread">
+                                <div class="notification-icon"><i class="fas fa-calendar-check"></i></div>
+                                <div class="notification-content">
+                                    <p>Meeting reminder: Progress Review</p>
+                                    <span class="notification-time">1 hour ago</span>
+                                </div>
+                            </div>
+                            <div class="notification-item unread">
+                                <div class="notification-icon"><i class="fas fa-book"></i></div>
+                                <div class="notification-content">
+                                    <p>New resource shared: ML Algorithms</p>
+                                    <span class="notification-time">Yesterday</span>
+                                </div>
+                            </div>
+                            <a href="#" class="view-all">View All Notifications</a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Overview -->
+            <div class="dashboard-overview">
+                <div class="overview-cards">
+                    <div class="overview-card">
+                        <div class="overview-icon"><i class="fas fa-calendar-check"></i></div>
+                        <div class="overview-info">
+                            <h3>2</h3>
+                            <p>Upcoming Meetings</p>
+                        </div>
+                    </div>
+                    <div class="overview-card">
+                        <div class="overview-icon"><i class="fas fa-comment-dots"></i></div>
+                        <div class="overview-info">
+                            <h3>5</h3>
+                            <p>Unread Messages</p>
+                        </div>
+                    </div>
+                    <div class="overview-card">
+                        <div class="overview-icon"><i class="fas fa-book"></i></div>
+                        <div class="overview-info">
+                            <h3>12</h3>
+                            <p>Shared Resources</p>
+                        </div>
+                    </div>
+                    <div class="overview-card">
+                        <div class="overview-icon"><i class="fas fa-tasks"></i></div>
+                        <div class="overview-info">
+                            <h3>3</h3>
+                            <p>Pending Tasks</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="mentor-section">
+                <h2 class="page-title">My Mentor</h2>
+
+                <!-- Mentor Card -->
+                <div class="mentor-card">
+                    <div class="mentor-header">
+                        <div class="mentor-profile-img">J</div>
+                        <div class="mentor-details">
+                            <h3>Dr. Jebakumar Immanuel D</h3>
+                            <p><i class="fas fa-user-tie"></i> Associate Professor</p>
+                            <p><i class="fas fa-graduation-cap"></i> Artificial Intelligence and Data Science</p>
+                            <p><i class="fas fa-envelope"></i> jebakumar.ai@karpagamtech.ac.in</p>
+                            <div class="mentor-status available">
+                                <span class="status-indicator"></span>
+                                <span class="status-text">Available</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mentor-actions">
+                        <button class="btn-primary btn-schedule"><i class="fas fa-calendar-plus"></i> Schedule Meeting</button>
+                        <button class="btn-secondary btn-video"><i class="fas fa-video"></i> Start Video Call</button>
+                        <button class="btn-tertiary btn-message"><i class="fas fa-comment"></i> Send Message</button>
+                    </div>
+                    <div class="mentor-info-tabs">
+                        <div class="tabs">
+                            <button class="tab-btn active" data-tab="office-hours">Office Hours</button>
+                            <button class="tab-btn" data-tab="courses">Courses</button>
+                            <button class="tab-btn" data-tab="research">Research Areas</button>
+                        </div>
+                        <div class="tab-content active" id="office-hours">
+                            <h4>Weekly Office Hours</h4>
+                            <ul class="office-hours-list">
+                                <li><span class="day">Monday:</span> 10:00 AM - 12:00 PM</li>
+                                <li><span class="day">Wednesday:</span> 2:00 PM - 4:00 PM</li>
+                                <li><span class="day">Friday:</span> 1:00 PM - 3:00 PM</li>
+                            </ul>
+                        </div>
+                        <div class="tab-content" id="courses">
+                            <h4>Courses Teaching</h4>
+                            <ul class="courses-list">
+                                <li>Machine Learning Fundamentals</li>
+                                <li>Data Structures and Algorithms</li>
+                                <li>AI Ethics</li>
+                            </ul>
+                        </div>
+                        <div class="tab-content" id="research">
+                            <h4>Research Interests</h4>
+                            <ul class="research-list">
+                                <li>Computer Vision</li>
+                                <li>Natural Language Processing</li>
+                                <li>Deep Learning Applications</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="schedule-section">
+                <!-- Upcoming Meetings -->
+                <h2 class="section-title">Upcoming Meetings</h2>
+                <div class="meetings-container">
+                    <div class="meeting-card">
+                        <div class="meeting-date">
+                            <div class="date-box">
+                                <span class="month">May</span>
+                                <span class="day">15</span>
+                            </div>
+                            <span class="time">10:00 AM</span>
+                            <span class="duration">30 min</span>
+                        </div>
+                        <div class="meeting-details">
+                            <h3>Career Guidance Session</h3>
+                            <p>Discussion about internship opportunities and project work</p>
+                            <div class="meeting-participants">
+                                <span class="participant">Dr. Jebakumar Immanuel D</span>
+                            </div>
+                        </div>
+                        <div class="meeting-actions">
+                            <button class="btn-join"><i class="fas fa-video"></i> Join Meeting</button>
+                            <button class="btn-reschedule"><i class="fas fa-calendar-alt"></i> Reschedule</button>
+                            <button class="btn-cancel"><i class="fas fa-times"></i> Cancel</button>
+                        </div>
+                    </div>
+                    <div class="meeting-card">
+                        <div class="meeting-date">
+                            <div class="date-box">
+                                <span class="month">May</span>
+                                <span class="day">22</span>
+                            </div>
+                            <span class="time">2:00 PM</span>
+                            <span class="duration">45 min</span>
+                        </div>
+                        <div class="meeting-details">
+                            <h3>Project Progress Review</h3>
+                            <p>Monthly project progress review and feedback session</p>
+                            <div class="meeting-participants">
+                                <span class="participant">Dr. Jebakumar Immanuel D</span>
+                            </div>
+                        </div>
+                        <div class="meeting-actions">
+                            <button class="btn-join"><i class="fas fa-video"></i> Join Meeting</button>
+                            <button class="btn-reschedule"><i class="fas fa-calendar-alt"></i> Reschedule</button>
+                            <button class="btn-cancel"><i class="fas fa-times"></i> Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="messages-section">
+                <!-- Recent Messages -->
+                <h2 class="section-title">Recent Messages</h2>
+                <div class="messages-container">
+                    <div class="message-card unread">
+                        <div class="message-sender">
+                            <div class="sender-img">J</div>
+                            <div class="sender-info">
+                                <h3>Dr. Jebakumar Immanuel D</h3>
+                                <span class="message-time">2 hours ago</span>
+                            </div>
+                            <div class="unread-indicator"></div>
+                        </div>
+                        <div class="message-content">
+                            <p>Here are the resources for your project work on machine learning. Please go through them and let me know if you have any questions.</p>
+                            <div class="message-attachments">
+                                <div class="attachment">
+                                    <i class="fas fa-file-pdf"></i>
+                                    <span>ML_Algorithms_Guide.pdf</span>
+                                </div>
+                                <div class="attachment">
+                                    <i class="fas fa-file-code"></i>
+                                    <span>sample_code.py</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="message-actions">
+                            <button class="btn-reply"><i class="fas fa-reply"></i> Reply</button>
+                            <button class="btn-mark-read"><i class="fas fa-check-double"></i> Mark as Read</button>
+                        </div>
+                    </div>
+
+                    <div class="message-card">
+                        <div class="message-sender">
+                            <div class="sender-img">J</div>
+                            <div class="sender-info">
+                                <h3>Dr. Jebakumar Immanuel D</h3>
+                                <span class="message-time">Yesterday</span>
+                            </div>
+                        </div>
+                        <div class="message-content">
+                            <p>Your progress in the Data Structures assignment is impressive. Keep up the good work!</p>
+                        </div>
+                        <div class="message-actions">
+                            <button class="btn-reply"><i class="fas fa-reply"></i> Reply</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Start a new message -->
+                <div class="new-message">
+                    <button class="btn-compose"><i class="fas fa-edit"></i> Compose New Message</button>
+                </div>
+            </div>
+
+            <div id="resources-section">
+                <!-- Shared Resources -->
+                <h2 class="section-title">Shared Resources</h2>
+                <div class="resources-filters">
+                    <button class="filter-btn active" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="documents">Documents</button>
+                    <button class="filter-btn" data-filter="videos">Videos</button>
+                    <button class="filter-btn" data-filter="links">Links</button>
+                </div>
+                <div class="resources-container">
+                    <div class="resource-card" data-type="documents">
+                        <div class="resource-icon"><i class="fas fa-file-pdf"></i></div>
+                        <div class="resource-info">
+                            <h3>Machine Learning Algorithms Guide</h3>
+                            <p>Comprehensive guide to popular ML algorithms and their implementations</p>
+                            <div class="resource-meta">
+                                <span><i class="fas fa-user"></i> Shared by Dr. Jebakumar</span>
+                                <span><i class="fas fa-calendar-alt"></i> May 8, 2023</span>
+                            </div>
+                        </div>
+                        <div class="resource-actions">
+                            <a href="https://www.youtube.com/watch?v=CXgbekl66jc" target="_blank" class="btn-view"><i class="fas fa-play"></i> Watch Introduction</a>
+                            <button class="btn-download"><i class="fas fa-download"></i> Download Guide</button>
+                        </div>
+                    </div>
+                    <div class="resource-card" data-type="videos">
+                        <div class="resource-icon"><i class="fas fa-video"></i></div>
+                        <div class="resource-info">
+                            <h3>Neural Networks Tutorial</h3>
+                            <p>Video tutorial explaining neural network architecture and applications</p>
+                            <div class="resource-meta">
+                                <span><i class="fas fa-user"></i> Shared by Dr. Jebakumar</span>
+                                <span><i class="fas fa-calendar-alt"></i> May 5, 2023</span>
+                            </div>
+                        </div>
+                        <div class="resource-actions">
+                            <a href="https://www.youtube.com/watch?v=aircAruvnKk" target="_blank" class="btn-view"><i class="fas fa-play"></i> Watch Video</a>
+                        </div>
+                    </div>
+                    <div class="resource-card" data-type="links">
+                        <div class="resource-icon"><i class="fas fa-link"></i></div>
+                        <div class="resource-info">
+                            <h3>Python Data Science Resources</h3>
+                            <p>Collection of useful websites and tools for data science using Python</p>
+                            <div class="resource-meta">
+                                <span><i class="fas fa-user"></i> Shared by Dr. Jebakumar</span>
+                                <span><i class="fas fa-calendar-alt"></i> April 30, 2023</span>
+                            </div>
+                        </div>
+                        <div class="resource-actions">
+                            <a href="https://www.youtube.com/watch?v=r-uOLxNrNk8" target="_blank" class="btn-view"><i class="fas fa-play"></i> Watch Tutorial</a>
+                            <button class="btn-open"><i class="fas fa-external-link-alt"></i> Open Resources</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Schedule Meeting Modal -->
+    <div class="modal" id="schedule-meeting-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Schedule a Meeting</h2>
+                <button class="close-modal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="schedule-form">
+                    <div class="form-group">
+                        <label for="meeting-title">Meeting Title</label>
+                        <input type="text" id="meeting-title" name="meeting-title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="meeting-date">Date</label>
+                        <input type="date" id="meeting-date" name="meeting-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="meeting-time">Time</label>
+                        <input type="time" id="meeting-time" name="meeting-time" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="meeting-duration">Duration (minutes)</label>
+                        <select id="meeting-duration" name="meeting-duration" required>
+                            <option value="15">15</option>
+                            <option value="30" selected>30</option>
+                            <option value="45">45</option>
+                            <option value="60">60</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="meeting-type">Meeting Type</label>
+                        <select id="meeting-type" name="meeting-type" required>
+                            <option value="video">Video Call</option>
+                            <option value="in-person">In Person</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="meeting-description">Description</label>
+                        <textarea id="meeting-description" name="meeting-description" rows="4"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="meeting-reminder">Set Reminder</label>
+                        <select id="meeting-reminder" name="meeting-reminder">
+                            <option value="15">15 minutes before</option>
+                            <option value="30" selected>30 minutes before</option>
+                            <option value="60">1 hour before</option>
+                            <option value="1440">1 day before</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-tertiary close-modal">Cancel</button>
+                        <button type="submit" class="btn-primary">Schedule Meeting</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Message Modal -->
+    <div class="modal" id="message-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Send Message</h2>
+                <button class="close-modal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="message-form">
+                    <div class="form-group">
+                        <label>To</label>
+                        <div class="recipient">
+                            <span class="recipient-field">Dr. Jebakumar Immanuel D</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="message-subject">Subject</label>
+                        <input type="text" id="message-subject" name="message-subject" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="message-content">Message</label>
+                        <textarea id="message-content" name="message-content" rows="6" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="message-attachments">Attachments</label>
+                        <div class="file-input-container">
+                            <input type="file" id="message-attachments" name="message-attachments" multiple>
+                            <label for="message-attachments" class="file-input-label">
+                                <i class="fas fa-paperclip"></i> Add Files
+                            </label>
+                        </div>
+                        <div id="attachment-list"></div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-tertiary close-modal">Cancel</button>
+                        <button type="submit" class="btn-primary">Send Message</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reschedule Modal -->
+    <div class="modal" id="reschedule-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Reschedule Meeting</h2>
+                <button class="close-modal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="reschedule-form">
+                    <div class="form-group">
+                        <label>Meeting</label>
+                        <div class="meeting">
+                            <span class="meeting-field">Progress Review Meeting</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="reschedule-date">New Date</label>
+                        <input type="date" id="reschedule-date" name="reschedule-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reschedule-time">New Time</label>
+                        <input type="time" id="reschedule-time" name="reschedule-time" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reschedule-reason">Reason for Rescheduling</label>
+                        <textarea id="reschedule-reason" name="reschedule-reason" rows="4" required></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-tertiary close-modal">Cancel</button>
+                        <button type="submit" class="btn-primary">Request Reschedule</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Video Call Modal -->
+    <div class="modal" id="video-call-modal">
+        <div class="modal-content video-modal-content">
+            <div class="modal-header">
+                <h2>Video Call with Dr. Jebakumar Immanuel D</h2>
+                <button class="close-modal" id="end-call-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body video-container">
+                <div class="video-grid">
+                    <div class="video-item">
+                        <video id="local-video" autoplay muted></video>
+                        <div class="video-label">You</div>
+                    </div>
+                    <div class="video-item">
+                        <video id="remote-video" autoplay></video>
+                        <div class="video-label">Dr. Jebakumar</div>
+                    </div>
+                </div>
+                <div class="call-controls">
+                    <button id="toggle-video" class="control-btn"><i class="fas fa-video"></i></button>
+                    <button id="toggle-audio" class="control-btn"><i class="fas fa-microphone"></i></button>
+                    <button id="share-screen" class="control-btn"><i class="fas fa-desktop"></i></button>
+                    <button id="end-call" class="control-btn end-call"><i class="fas fa-phone-slash"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Chat Container -->
+    <div class="chat-container" id="live-chat">
+        <div class="chat-header">
+            <h3><i class="fas fa-comment-alt"></i> Live Chat</h3>
+            <div class="chat-controls">
+                <button id="minimize-chat"><i class="fas fa-minus"></i></button>
+                <button id="close-chat"><i class="fas fa-times"></i></button>
+            </div>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            <!-- Messages will be added here dynamically -->
+        </div>
+        <div class="chat-input">
+            <input type="text" id="message-input" placeholder="Type a message...">
+            <button id="send-message"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <script src="student_script.js"></script>
+    <script src="communication.js"></script>
+    <script src="test_data.js"></script>
+</body>
+</html> 
