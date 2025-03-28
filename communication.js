@@ -1,7 +1,7 @@
 // communication.js - Handles WebRTC peer connections for video calls and messaging
 
 // Configuration for connecting to the signaling server
-const SIGNALING_SERVER_URL = 'https://karpagam-mentoring.herokuapp.com';
+const SIGNALING_SERVER_URL = 'https://mentor-connect-we1o.onrender.com';
 const ICE_SERVERS = {
     iceServers: [
         { urls: 'stun:stun.l.google.com:19302' },
@@ -67,112 +67,178 @@ if (isMentor) {
 document.addEventListener('DOMContentLoaded', initCommunication);
 
 function initCommunication() {
-    // Connect to the signaling server
-    socket = io(SIGNALING_SERVER_URL);
-    
-    // Set up the PeerJS connection
-    peer = new Peer(myPeerId, {
-        host: 'peerjs-server.herokuapp.com',
-        secure: true,
-        port: 443,
-        config: ICE_SERVERS
-    });
-    
-    // When the peer connection is established
-    peer.on('open', (id) => {
-        console.log(`My peer ID is: ${id}`);
+    try {
+        // Connect to the signaling server
+        console.log('Connecting to signaling server:', SIGNALING_SERVER_URL);
+        socket = io(SIGNALING_SERVER_URL);
         
-        // Register with the signaling server
-        socket.emit('register', { 
-            peerId: id, 
-            role: role,
-            name: isMentor ? 'Dr. Jebakumar Immanuel D' : 'Afshana R'
+        socket.on('connect', () => {
+            console.log('Connected to signaling server');
         });
-    });
-    
-    // When we receive a call
-    peer.on('call', (call) => {
-        // Show notification for incoming call
-        showNotification(
-            isMentor ? 'Incoming call from Afshana R' : 'Incoming call from Dr. Jebakumar',
-            'video-call'
-        );
         
-        // Ask user to accept the call
-        if (confirm(`${isMentor ? 'Afshana R' : 'Dr. Jebakumar'} is calling. Answer?`)) {
-            // Get user media and answer the call
-            navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-                .then((stream) => {
-                    localStream = stream;
-                    localVideo.srcObject = stream;
-                    call.answer(stream);
-                    call.on('stream', handleRemoteStream);
-                    
-                    // Show the video call modal
-                    showVideoCallModal();
-                })
-                .catch((error) => {
-                    console.error('Failed to get local stream', error);
-                    alert('Could not access camera and microphone. Please check permissions.');
-                });
-        } else {
-            // Decline the call
-            call.close();
-            socket.emit('call-declined', { 
-                from: myPeerId, 
-                to: remotePeerId 
+        socket.on('connect_error', (error) => {
+            console.error('Failed to connect to signaling server:', error);
+            alert('Failed to connect to communication server. Please try refreshing the page.');
+        });
+        
+        // Set up the PeerJS connection
+        console.log('Setting up PeerJS connection');
+        peer = new Peer(myPeerId, {
+            host: 'peerjs.jenovarain.com',
+            secure: true,
+            port: 443,
+            config: ICE_SERVERS,
+            debug: 3
+        });
+        
+        // Handle peer errors
+        peer.on('error', (err) => {
+            console.error('PeerJS error:', err);
+            if (err.type === 'peer-unavailable') {
+                alert('The person you are trying to connect with is not available.');
+            } else {
+                alert('Connection error: ' + err);
+            }
+        });
+        
+        // When the peer connection is established
+        peer.on('open', (id) => {
+            console.log(`My peer ID is: ${id}`);
+            
+            // Register with the signaling server
+            socket.emit('register', { 
+                peerId: id, 
+                role: role,
+                name: isMentor ? 'Dr. Jebakumar Immanuel D' : 'Afshana R'
             });
-        }
-    });
-    
-    // Handle incoming data connection
-    peer.on('connection', (conn) => {
-        connection = conn;
-        setupDataConnection();
-    });
-    
-    // Set up event listeners for UI elements
-    setupUIListeners();
+        });
+        
+        // When we receive a call
+        peer.on('call', (call) => {
+            // Show notification for incoming call
+            showNotification(
+                isMentor ? 'Incoming call from Afshana R' : 'Incoming call from Dr. Jebakumar',
+                'video-call'
+            );
+            
+            // Ask user to accept the call
+            if (confirm(`${isMentor ? 'Afshana R' : 'Dr. Jebakumar'} is calling. Answer?`)) {
+                // Get user media and answer the call
+                navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+                    .then((stream) => {
+                        localStream = stream;
+                        if (localVideo) localVideo.srcObject = stream;
+                        call.answer(stream);
+                        call.on('stream', handleRemoteStream);
+                        
+                        // Show the video call modal
+                        showVideoCallModal();
+                    })
+                    .catch((error) => {
+                        console.error('Failed to get local stream', error);
+                        alert('Could not access camera and microphone. Please check permissions.');
+                    });
+            } else {
+                // Decline the call
+                call.close();
+                socket.emit('call-declined', { 
+                    from: myPeerId, 
+                    to: remotePeerId 
+                });
+            }
+        });
+        
+        // Handle incoming data connection
+        peer.on('connection', (conn) => {
+            connection = conn;
+            setupDataConnection();
+        });
+        
+        // Set up event listeners for UI elements
+        setupUIListeners();
+    } catch (error) {
+        console.error('Error in initCommunication:', error);
+        alert('Failed to initialize communication. Please check your internet connection and try again.');
+    }
 }
 
 // Function to initiate a call
 function startCall() {
-    navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-        .then((stream) => {
-            localStream = stream;
-            localVideo.srcObject = stream;
-            
-            // Create data connection first for messaging
-            if (!connection) {
-                connection = peer.connect(remotePeerId);
-                setupDataConnection();
-            }
-            
-            // Call the remote peer
-            const call = peer.call(remotePeerId, stream);
-            
-            // Notify the other user
-            socket.emit('call-initiated', { 
-                from: myPeerId, 
-                to: remotePeerId,
-                name: isMentor ? 'Dr. Jebakumar Immanuel D' : 'Afshana R'
+    try {
+        console.log('Starting call to:', remotePeerId);
+        
+        if (!peer || peer.disconnected) {
+            alert('Connection to peer server lost. Please refresh the page and try again.');
+            return;
+        }
+        
+        // Check if the other person is available
+        if (!remotePeerId) {
+            alert('No one to call. Please wait for the other person to connect.');
+            return;
+        }
+        
+        navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+            .then((stream) => {
+                localStream = stream;
+                if (localVideo) localVideo.srcObject = stream;
+                
+                console.log('Local media stream obtained');
+                
+                // Create data connection first for messaging
+                if (!connection) {
+                    console.log('Creating data connection');
+                    connection = peer.connect(remotePeerId);
+                    setupDataConnection();
+                }
+                
+                // Call the remote peer
+                console.log('Calling remote peer');
+                const call = peer.call(remotePeerId, stream);
+                
+                if (!call) {
+                    console.error('Failed to create call object');
+                    alert('Failed to create call. Please try again.');
+                    return;
+                }
+                
+                // Notify the other user
+                socket.emit('call-initiated', { 
+                    from: myPeerId, 
+                    to: remotePeerId,
+                    name: isMentor ? 'Dr. Jebakumar Immanuel D' : 'Afshana R'
+                });
+                
+                // When the remote stream is received
+                call.on('stream', (remoteStream) => {
+                    console.log('Received remote stream');
+                    handleRemoteStream(remoteStream);
+                });
+                
+                // When the call is closed
+                call.on('close', () => {
+                    console.log('Call closed');
+                    endCall();
+                });
+                
+                // Handle errors
+                call.on('error', (err) => {
+                    console.error('Call error:', err);
+                    alert('Call error: ' + err);
+                    endCall();
+                });
+                
+                // Show the video call modal
+                showVideoCallModal();
+            })
+            .catch((error) => {
+                console.error('Failed to get local stream', error);
+                alert('Could not access camera and microphone. Please check permissions and ensure no other application is using them.');
             });
-            
-            // When the remote stream is received
-            call.on('stream', handleRemoteStream);
-            
-            // When the call is closed
-            call.on('close', () => {
-                endCall();
-            });
-            
-            // Show the video call modal
-            showVideoCallModal();
-        })
-        .catch((error) => {
-            console.error('Failed to get local stream', error);
-            alert('Could not access camera and microphone. Please check permissions.');
-        });
+    } catch (error) {
+        console.error('Error in startCall:', error);
+        alert('Failed to start call. Please try again.');
+    }
 }
 
 // Handle the remote stream
@@ -188,7 +254,11 @@ function setupDataConnection() {
     connection.on('open', () => {
         console.log('Data connection established');
         // Show the chat interface
-        liveChatContainer.style.display = 'flex';
+        if (liveChatContainer) {
+            liveChatContainer.style.display = 'flex';
+        } else {
+            console.error('Chat container not found in the DOM');
+        }
     });
     
     connection.on('data', (data) => {
@@ -196,8 +266,9 @@ function setupDataConnection() {
             // Add message to chat
             addMessageToChat(data.text, false);
             
-            // Show notification if chat is minimized
-            if (liveChatContainer.classList.contains('minimized')) {
+            // Show notification if chat is minimized or not visible
+            if (!liveChatContainer || liveChatContainer.style.display === 'none' || 
+                liveChatContainer.classList.contains('minimized')) {
                 showNotification(
                     `New message from ${isMentor ? 'Afshana R' : 'Dr. Jebakumar'}`,
                     'message'
@@ -206,10 +277,16 @@ function setupDataConnection() {
         }
     });
     
+    connection.on('error', (err) => {
+        console.error('Data connection error:', err);
+    });
+    
     connection.on('close', () => {
         console.log('Data connection closed');
         // Hide chat when connection closes
-        liveChatContainer.style.display = 'none';
+        if (liveChatContainer) {
+            liveChatContainer.style.display = 'none';
+        }
     });
 }
 
@@ -377,61 +454,23 @@ function showVideoCallModal() {
 
 // Show notification
 function showNotification(message, type) {
-    // Check if the Notification API is available
-    if (!("Notification" in window)) {
-        console.log("This browser does not support desktop notification");
+    if (!('Notification' in window)) {
+        alert(message);
         return;
     }
     
-    // Check if permission is already granted
-    if (Notification.permission === "granted") {
+    if (Notification.permission === 'granted') {
         createNotification(message, type);
-    } 
-    // Otherwise, ask for permission
-    else if (Notification.permission !== "denied") {
+    } else if (Notification.permission !== 'denied') {
         Notification.requestPermission().then(permission => {
-            if (permission === "granted") {
+            if (permission === 'granted') {
                 createNotification(message, type);
+            } else {
+                alert(message);
             }
         });
-    }
-    
-    // Also add to in-app notifications
-    const notificationCount = document.getElementById('notification-count');
-    const notificationList = document.getElementById('notification-list');
-    
-    if (notificationCount && notificationList) {
-        // Increment notification count
-        const count = parseInt(notificationCount.textContent) + 1;
-        notificationCount.textContent = count;
-        
-        // Add to notification list
-        const notificationItem = document.createElement('div');
-        notificationItem.className = 'notification-item unread';
-        
-        const icon = document.createElement('div');
-        icon.className = 'notification-icon';
-        icon.innerHTML = type === 'video-call' 
-            ? '<i class="fas fa-video"></i>'
-            : '<i class="fas fa-comment"></i>';
-        
-        const content = document.createElement('div');
-        content.className = 'notification-content';
-        
-        const text = document.createElement('p');
-        text.textContent = message;
-        
-        const time = document.createElement('span');
-        time.className = 'notification-time';
-        time.textContent = 'Just now';
-        
-        content.appendChild(text);
-        content.appendChild(time);
-        
-        notificationItem.appendChild(icon);
-        notificationItem.appendChild(content);
-        
-        notificationList.insertBefore(notificationItem, notificationList.firstChild);
+    } else {
+        alert(message);
     }
 }
 
@@ -463,28 +502,45 @@ function createNotification(message, type) {
 
 // Set up UI event listeners
 function setupUIListeners() {
+    console.log('Setting up UI listeners');
+    
     // Video call controls
     if (toggleVideoBtn) {
         toggleVideoBtn.addEventListener('click', toggleVideo);
+        console.log('Added listener for toggleVideoBtn');
+    } else {
+        console.warn('toggleVideoBtn not found in the DOM');
     }
     
     if (toggleAudioBtn) {
         toggleAudioBtn.addEventListener('click', toggleAudio);
+        console.log('Added listener for toggleAudioBtn');
+    } else {
+        console.warn('toggleAudioBtn not found in the DOM');
     }
     
     if (shareScreenBtn) {
         shareScreenBtn.addEventListener('click', shareScreen);
+        console.log('Added listener for shareScreenBtn');
+    } else {
+        console.warn('shareScreenBtn not found in the DOM');
     }
     
     if (endCallBtn) {
         endCallBtn.addEventListener('click', endCall);
+        console.log('Added listener for endCallBtn');
+    } else {
+        console.warn('endCallBtn not found in the DOM');
     }
     
     // Messaging controls
     if (sendMessageBtn) {
         sendMessageBtn.addEventListener('click', () => {
-            sendMessage(messageInput.value);
+            if (messageInput) sendMessage(messageInput.value);
         });
+        console.log('Added listener for sendMessageBtn');
+    } else {
+        console.warn('sendMessageBtn not found in the DOM');
     }
     
     if (messageInput) {
@@ -493,39 +549,86 @@ function setupUIListeners() {
                 sendMessage(messageInput.value);
             }
         });
+        console.log('Added listener for messageInput');
+    } else {
+        console.warn('messageInput not found in the DOM');
     }
     
     if (minimizeChatBtn) {
         minimizeChatBtn.addEventListener('click', () => {
-            liveChatContainer.classList.toggle('minimized');
+            if (liveChatContainer) liveChatContainer.classList.toggle('minimized');
         });
+        console.log('Added listener for minimizeChatBtn');
+    } else {
+        console.warn('minimizeChatBtn not found in the DOM');
     }
     
     if (closeChatBtn) {
         closeChatBtn.addEventListener('click', () => {
-            liveChatContainer.style.display = 'none';
+            if (liveChatContainer) liveChatContainer.style.display = 'none';
         });
+        console.log('Added listener for closeChatBtn');
+    } else {
+        console.warn('closeChatBtn not found in the DOM');
     }
     
     // Video call buttons in the UI
     const videoCallBtns = document.querySelectorAll('.btn-video');
-    videoCallBtns.forEach(btn => {
-        btn.addEventListener('click', startCall);
-    });
+    if (videoCallBtns.length > 0) {
+        videoCallBtns.forEach(btn => {
+            btn.addEventListener('click', startCall);
+        });
+        console.log(`Added listeners for ${videoCallBtns.length} video call buttons`);
+    } else {
+        console.warn('No video call buttons found');
+    }
+    
+    // Quick action instant meeting button
+    const instantMeetingBtn = document.getElementById('btnInstantMeeting');
+    if (instantMeetingBtn) {
+        instantMeetingBtn.addEventListener('click', startCall);
+        console.log('Added listener for instant meeting button');
+    }
     
     // Message buttons in the UI
     const messageBtns = document.querySelectorAll('.btn-message');
-    messageBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            // Create data connection if it doesn't exist
-            if (!connection) {
+    if (messageBtns.length > 0) {
+        messageBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Create data connection if it doesn't exist
+                if (!connection && peer) {
+                    connection = peer.connect(remotePeerId);
+                    setupDataConnection();
+                }
+                
+                // Show chat
+                if (liveChatContainer) {
+                    liveChatContainer.style.display = 'flex';
+                    liveChatContainer.classList.remove('minimized');
+                } else {
+                    console.error('Chat container not found in the DOM');
+                }
+            });
+        });
+        console.log(`Added listeners for ${messageBtns.length} message buttons`);
+    } else {
+        console.warn('No message buttons found');
+    }
+    
+    // Quick action message button
+    const quickMessageBtn = document.getElementById('btnQuickMessage');
+    if (quickMessageBtn) {
+        quickMessageBtn.addEventListener('click', () => {
+            if (!connection && peer) {
                 connection = peer.connect(remotePeerId);
                 setupDataConnection();
             }
             
-            // Show chat
-            liveChatContainer.style.display = 'flex';
-            liveChatContainer.classList.remove('minimized');
+            if (liveChatContainer) {
+                liveChatContainer.style.display = 'flex';
+                liveChatContainer.classList.remove('minimized');
+            }
         });
-    });
+        console.log('Added listener for quick message button');
+    }
 } 
