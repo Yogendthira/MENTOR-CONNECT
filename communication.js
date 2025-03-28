@@ -292,23 +292,33 @@ function setupDataConnection() {
 
 // Send a message through the data connection
 function sendMessage(text) {
-    if (!connection || !text.trim()) return;
+    if (!text.trim()) return;
     
     // Create message data
     const messageData = {
-        type: 'message',
+        from: myPeerId,
+        to: remotePeerId,
         text: text.trim(),
+        name: isMentor ? 'Dr. Jebakumar Immanuel D' : 'Afshana R',
         timestamp: new Date().toISOString()
     };
     
-    // Send through the data connection
-    connection.send(messageData);
-    
-    // Add to own chat
-    addMessageToChat(text.trim(), true);
-    
-    // Clear input
-    messageInput.value = '';
+    // Send through Socket.IO instead of data connection
+    if (socket) {
+        console.log('Sending message via Socket.IO:', messageData);
+        socket.emit('direct-message', messageData);
+        
+        // Add to own chat
+        addMessageToChat(text.trim(), true);
+        
+        // Clear input
+        if (messageInput) {
+            messageInput.value = '';
+        }
+    } else {
+        console.error('Socket not available for sending message');
+        alert('Connection error. Please refresh the page and try again.');
+    }
 }
 
 // Add a message to the chat window
@@ -504,6 +514,34 @@ function createNotification(message, type) {
 function setupUIListeners() {
     console.log('Setting up UI listeners');
     
+    // Listen for direct messages
+    if (socket) {
+        socket.on('direct-message', (data) => {
+            console.log('Received direct message:', data);
+            // Add message to chat
+            addMessageToChat(data.text, false);
+            
+            // Show notification if chat is minimized or not visible
+            if (!liveChatContainer || liveChatContainer.style.display === 'none' || 
+                liveChatContainer.classList.contains('minimized')) {
+                showNotification(
+                    `New message from ${isMentor ? 'Afshana R' : 'Dr. Jebakumar'}`,
+                    'message'
+                );
+            }
+            
+            // Show chat container if it exists
+            if (liveChatContainer) {
+                liveChatContainer.style.display = 'flex';
+            }
+        });
+        
+        socket.on('message-error', (data) => {
+            console.error('Message error:', data);
+            alert(`Message could not be delivered: ${data.error}`);
+        });
+    }
+    
     // Video call controls
     if (toggleVideoBtn) {
         toggleVideoBtn.addEventListener('click', toggleVideo);
@@ -595,12 +633,6 @@ function setupUIListeners() {
     if (messageBtns.length > 0) {
         messageBtns.forEach(btn => {
             btn.addEventListener('click', () => {
-                // Create data connection if it doesn't exist
-                if (!connection && peer) {
-                    connection = peer.connect(remotePeerId);
-                    setupDataConnection();
-                }
-                
                 // Show chat
                 if (liveChatContainer) {
                     liveChatContainer.style.display = 'flex';
@@ -619,11 +651,6 @@ function setupUIListeners() {
     const quickMessageBtn = document.getElementById('btnQuickMessage');
     if (quickMessageBtn) {
         quickMessageBtn.addEventListener('click', () => {
-            if (!connection && peer) {
-                connection = peer.connect(remotePeerId);
-                setupDataConnection();
-            }
-            
             if (liveChatContainer) {
                 liveChatContainer.style.display = 'flex';
                 liveChatContainer.classList.remove('minimized');

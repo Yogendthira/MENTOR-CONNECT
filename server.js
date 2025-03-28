@@ -60,6 +60,31 @@ io.on('connection', (socket) => {
         });
     });
     
+    // Handle direct messages
+    socket.on('direct-message', (data) => {
+        console.log('Direct message:', data);
+        
+        // Find the recipient's socket ID
+        const recipient = users[data.to];
+        if (recipient) {
+            // Forward the message to the recipient
+            io.to(recipient.socketId).emit('direct-message', {
+                from: data.from,
+                text: data.text,
+                name: data.name,
+                timestamp: data.timestamp
+            });
+            console.log('Message forwarded to recipient');
+        } else {
+            // Notify sender that recipient is not online
+            io.to(socket.id).emit('message-error', {
+                error: 'Recipient is not online',
+                originalMessage: data
+            });
+            console.log('Recipient not found for message');
+        }
+    });
+    
     // When a call is initiated
     socket.on('call-initiated', (data) => {
         console.log('Call initiated:', data);
